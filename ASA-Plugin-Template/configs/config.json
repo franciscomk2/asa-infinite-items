@@ -1,0 +1,9 @@
+{
+  "General": {
+    "Debug": true
+  },
+  "Commands": {
+    "TestCMD": "/test"
+  },
+  "InfiniteItems": ["Grappling Hook", "Bola"]
+}

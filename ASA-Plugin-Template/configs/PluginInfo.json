@@ -1,0 +1,6 @@
+{
+    "FullName": "Infinite Items",
+    "Description": "Hace infinitos los objetos indicados en config.json",
+    "Version": 0.1,
+    "MinApiVersion": 1.0
+}

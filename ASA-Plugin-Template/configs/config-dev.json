@@ -1,0 +1,8 @@
+{
+  "General": {
+    "Debug": true
+  },
+  "Commands": {
+    "CMD1": "/command"
+  }
+}
