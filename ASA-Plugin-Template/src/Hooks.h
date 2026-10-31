@@ -46,30 +46,6 @@ inline void LogOnce(UPrimalItem* item, const std::string& tipo)
             tipo, cls, item->DescriptiveNameBaseField().ToString());
 }
 
-inline bool IsInfiniteWeapon(AShooterWeapon* weapon)
-{
-    if (!weapon) return false;
-    UPrimalItem* item = weapon->AssociatedPrimalItemField();
-    if (!item) return false;
-    LogOnce(item, "arma");
-    return IsInfiniteItem(item);
-}
-
-// ---- Armas ----
-DECLARE_HOOK(AShooterWeapon_UseAmmo, void, AShooterWeapon*, int);
-void Hook_AShooterWeapon_UseAmmo(AShooterWeapon* _this, int amount)
-{
-    if (IsInfiniteWeapon(_this)) return;
-    AShooterWeapon_UseAmmo_original(_this, amount);
-}
-
-DECLARE_HOOK(AShooterWeapon_ConsumeAmmoItem, void, AShooterWeapon*, int);
-void Hook_AShooterWeapon_ConsumeAmmoItem(AShooterWeapon* _this, int qty)
-{
-    if (IsInfiniteWeapon(_this)) return;
-    AShooterWeapon_ConsumeAmmoItem_original(_this, qty);
-}
-
 // ---- Cantidad (gancho, bola...) ----
 DECLARE_HOOK(UPrimalItem_IncrementItemQuantity, int, UPrimalItem*, int, bool, bool, bool, bool, bool, bool);
 int Hook_UPrimalItem_IncrementItemQuantity(UPrimalItem* _this, int amount, bool bReplicateToClient,
@@ -80,8 +56,9 @@ int Hook_UPrimalItem_IncrementItemQuantity(UPrimalItem* _this, int amount, bool 
     {
         LogOnce(_this, bIsFromUseConsumption ? "consumo" : "cantidad");
 
+        // Se llama a la original igualmente, pero sin restar nada
         if (bIsFromUseConsumption && IsInfiniteItem(_this))
-            return _this->ItemQuantityField();
+            amount = 0;
     }
 
     return UPrimalItem_IncrementItemQuantity_original(_this, amount, bReplicateToClient,
@@ -97,7 +74,10 @@ void Hook_UPrimalItem_AddItemDurability(UPrimalItem* _this, float durabilityToAd
     if (_this && durabilityToAdd < 0.0f)
     {
         LogOnce(_this, "durabilidad");
-        if (IsInfiniteItem(_this)) return;
+
+        // Se llama a la original igualmente, pero sin restar nada
+        if (IsInfiniteItem(_this))
+            durabilityToAdd = 0.0f;
     }
 
     UPrimalItem_AddItemDurability_original(_this, durabilityToAdd, bNotifyClientForEquippedItems);
