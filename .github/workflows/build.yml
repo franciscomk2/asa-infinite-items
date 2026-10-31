@@ -1,0 +1,81 @@
+name: Compilar plugin
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: windows-2022
+    steps:
+      - name: Descargar tu repositorio
+        uses: actions/checkout@v4
+
+      - name: Descargar AsaApi
+        uses: actions/checkout@v4
+        with:
+          repository: ArkServerApi/AsaApi
+          path: AsaApi
+          submodules: recursive
+
+      - name: Preparar MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Preparar vcpkg
+        shell: pwsh
+        run: |
+          git -C C:\vcpkg fetch --unshallow
+          C:\vcpkg\vcpkg.exe integrate install
+
+      - name: Quitar dependencias de Permissions y ArkShop
+        shell: pwsh
+        run: |
+          $proj = "ASA-Plugin-Template\Plugin.vcxproj"
+          $t = Get-Content $proj -Raw
+          $t = $t.Replace(';$(SolutionDir)..\ASA-Plugins\Permissions\Permissions\Public;$(SolutionDir)..\ASA-Plugins\ArkShop\ArkShop\Public', '')
+          $t = $t.Replace('$(SolutionDir)..\ASA-Plugins\Permissions\out_lib\Permissions.lib;$(SolutionDir)..\ASA-Plugins\ArkShop\out_lib\ArkShop.lib;', '')
+          Set-Content $proj $t -NoNewline
+
+          $u = "ASA-Plugin-Template\src\Utils.h"
+          $t = Get-Content $u -Raw
+          $t = [regex]::Replace($t, '(?s)FString GetPriorPerm.*?(?=void ReadConfig\(\))', '')
+          Set-Content $u $t -NoNewline
+
+          if ((Select-String -Path $u, $proj -Pattern "ArkShop|Permissions" -Quiet)) {
+            throw "Siguen quedando referencias a ArkShop o Permissions"
+          }
+
+      - name: Compilar AsaApi
+        shell: pwsh
+        run: |
+          $sln = Get-ChildItem -Path AsaApi -Filter AsaApi.sln -Recurse | Select-Object -First 1
+          if (-not $sln) { throw "No encuentro AsaApi.sln" }
+          msbuild $sln.FullName /p:Configuration=Release /p:Platform=x64 /m
+
+      - name: Colocar AsaApi.lib donde lo espera el plugin
+        shell: pwsh
+        run: |
+          $lib = Get-ChildItem -Path AsaApi -Recurse -Filter AsaApi.lib | Select-Object -First 1
+          if (-not $lib) { throw "No se generó AsaApi.lib" }
+          New-Item -ItemType Directory -Force -Path AsaApi\out_lib | Out-Null
+          $dest = Join-Path $PWD "AsaApi\out_lib\AsaApi.lib"
+          if ($lib.FullName -ne $dest) { Copy-Item $lib.FullName $dest -Force }
+          Write-Host "AsaApi.lib encontrada en: $($lib.FullName)"
+
+      - name: Compilar el plugin
+        shell: pwsh
+        run: msbuild ASA-Plugin-Template\PluginTemplate.sln /p:Configuration=Release /p:Platform=x64 /m
+
+      - name: Listar archivos generados
+        shell: pwsh
+        run: Get-ChildItem ASA-Plugin-Template -Recurse -Include *.dll,*.pdb | ForEach-Object { $_.FullName }
+
+      - name: Guardar resultado
+        uses: actions/upload-artifact@v4
+        with:
+          name: plugin-compilado
+          path: |
+            ASA-Plugin-Template/**/*.dll
+            ASA-Plugin-Template/configs/*.json
+          if-no-files-found: warn
