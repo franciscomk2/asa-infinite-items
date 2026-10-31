@@ -46,6 +46,22 @@ jobs:
             throw "Siguen quedando referencias a ArkShop o Permissions"
           }
 
+      - name: Ajustar versión del compilador MSVC
+        shell: pwsh
+        run: |
+          $dir = "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC"
+          Write-Host "Versiones instaladas:"
+          Get-ChildItem $dir -Directory | ForEach-Object { Write-Host $_.Name }
+          $ver = (Get-ChildItem $dir -Directory | Sort-Object Name -Descending | Select-Object -First 1).Name
+          Write-Host "Usando: $ver"
+          Get-ChildItem -Path AsaApi, ASA-Plugin-Template -Recurse -Include *.vcxproj,*.props,*.targets | ForEach-Object {
+            $c = Get-Content $_.FullName -Raw
+            if ($c.Contains("14.39.33519")) {
+              Set-Content $_.FullName $c.Replace("14.39.33519", $ver) -NoNewline
+              Write-Host "Parcheado: $($_.FullName)"
+            }
+          }
+
       - name: Compilar AsaApi
         shell: pwsh
         run: |
