@@ -54,13 +54,16 @@ jobs:
           Get-ChildItem $dir -Directory | ForEach-Object { Write-Host $_.Name }
           $ver = (Get-ChildItem $dir -Directory | Sort-Object Name -Descending | Select-Object -First 1).Name
           Write-Host "Usando: $ver"
-          Get-ChildItem -Path AsaApi, ASA-Plugin-Template -Recurse -Include *.vcxproj,*.props,*.targets | ForEach-Object {
-            $c = Get-Content $_.FullName -Raw
-            if ($c.Contains("14.39.33519")) {
-              Set-Content $_.FullName $c.Replace("14.39.33519", $ver) -NoNewline
-              Write-Host "Parcheado: $($_.FullName)"
+          $ext = @('.vcxproj','.props','.targets','.cmake','.json','.txt','.user')
+          Get-ChildItem -Path AsaApi, ASA-Plugin-Template -Recurse -File -Force |
+            Where-Object { $ext -contains $_.Extension -and $_.FullName -notmatch '\\\.git\\' } |
+            ForEach-Object {
+              $c = Get-Content $_.FullName -Raw
+              if ($c -and $c.Contains("14.39.33519")) {
+                Set-Content $_.FullName $c.Replace("14.39.33519", $ver) -NoNewline
+                Write-Host "Parcheado: $($_.FullName)"
+              }
             }
-          }
 
       - name: Compilar AsaApi
         shell: pwsh
