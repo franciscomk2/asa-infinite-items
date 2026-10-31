@@ -34,11 +34,6 @@ extern "C" __declspec(dllexport) void Plugin_Init()
     AsaApi::GetHooks().SetHook("AShooterGameMode.BeginPlay()", Hook_AShooterGameMode_BeginPlay,
         &AShooterGameMode_BeginPlay_original);
 
-    AsaApi::GetHooks().SetHook("AShooterWeapon.UseAmmo",
-        Hook_AShooterWeapon_UseAmmo, &AShooterWeapon_UseAmmo_original);
-    AsaApi::GetHooks().SetHook("AShooterWeapon.ConsumeAmmoItem",
-        Hook_AShooterWeapon_ConsumeAmmoItem, &AShooterWeapon_ConsumeAmmoItem_original);
-
     AsaApi::GetHooks().SetHook("UPrimalItem.IncrementItemQuantity(int,bool,bool,bool,bool,bool,bool)",
         Hook_UPrimalItem_IncrementItemQuantity, &UPrimalItem_IncrementItemQuantity_original);
     AsaApi::GetHooks().SetHook("UPrimalItem.AddItemDurability(float,bool)",
@@ -51,8 +46,6 @@ extern "C" __declspec(dllexport) void Plugin_Init()
 extern "C" __declspec(dllexport) void Plugin_Unload()
 {
     AsaApi::GetHooks().DisableHook("AShooterGameMode.BeginPlay()", Hook_AShooterGameMode_BeginPlay);
-    AsaApi::GetHooks().DisableHook("AShooterWeapon.UseAmmo", Hook_AShooterWeapon_UseAmmo);
-    AsaApi::GetHooks().DisableHook("AShooterWeapon.ConsumeAmmoItem", Hook_AShooterWeapon_ConsumeAmmoItem);
     AsaApi::GetHooks().DisableHook("UPrimalItem.IncrementItemQuantity(int,bool,bool,bool,bool,bool,bool)",
         Hook_UPrimalItem_IncrementItemQuantity);
     AsaApi::GetHooks().DisableHook("UPrimalItem.AddItemDurability(float,bool)",
