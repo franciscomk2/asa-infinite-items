@@ -1,9 +1,5 @@
-{
-  "General": {
-    "Debug": true
-  },
-  "Commands": {
-    "TestCMD": "/test"
-  },
-  "InfiniteItems": ["Grappling Hook", "Bola"]
-}
+"InfiniteItems": [
+  "PrimalItemAmmo_GrapplingHook_C",
+  "PrimalItem_WeaponBola_C",
+  "PrimalItemConsumableBuff_Parachute_C"
+]
